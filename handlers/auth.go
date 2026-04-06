@@ -19,14 +19,14 @@ func Register(c *gin.Context) {
 
 	// Bind JSON body to struct
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		errorResponse(c, http.StatusBadRequest, "Invalid request")
 		return
 	}
 
 	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not hash password"})
+		errorResponse(c, http.StatusBadRequest, "Could not hash password")
 		return
 	}
 
@@ -39,42 +39,42 @@ func Register(c *gin.Context) {
 
 	// Save to DB
 	if err := repository.CreateUser(config.DB, user); err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
+		errorResponse(c, http.StatusConflict, "Email already exists")
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
+	successResponse(c, "User registered successfully")
 }
 
 func Login(c *gin.Context) {
 	var req models.RegisterRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		errorResponse(c, http.StatusBadRequest, "Invalid request")
 		return
 	}
 
 	// Fetch user from DB by email
 	user, err := repository.GetUserByEmail(config.DB, req.Email)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		errorResponse(c, http.StatusUnauthorized, "Invalid email or password")
 		return
 	}
 
 	// Compare hashed password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		errorResponse(c, http.StatusUnauthorized, "Invalid email or password")
 		return
 	}
 
 	// Generate JWT token
 	token, err := generateToken(user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
+		errorResponse(c, http.StatusInternalServerError, "Could not generate token")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	successResponse(c, gin.H{"token": token})
 }
 
 func generateToken(userID int) (string, error) {
