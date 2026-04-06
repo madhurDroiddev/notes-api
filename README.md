@@ -1,28 +1,35 @@
-# Notes API
+# 📝 Notes API
 
 A RESTful Notes API built with Go, Gin, and PostgreSQL. Supports user authentication with JWT and full-text note search.
 
-## Tech Stack
-- **Language**: Go
-- **Framework**: Gin
-- **Database**: PostgreSQL
-- **Auth**: JWT (golang-jwt)
-- **Password Hashing**: bcrypt
+---
 
-## Features
-- User registration and login
-- JWT-based authentication
-- Create, read, update, delete notes
-- Full-text search across notes
+## 🚀 Tech Stack
 
-## Project Structure
+* **Language**: Go
+* **Framework**: Gin
+* **Database**: PostgreSQL
+* **Auth**: JWT (`golang-jwt`)
+* **Password Hashing**: bcrypt
+
+## ✨ Features
+
+* User registration and secure login
+* JWT-based endpoint protection
+* Create, Read, Update, and Delete (CRUD) notes
+* Full-text search functionality across notes
+
+## 📂 Project Structure
+
+```text
 notes-api/
-├── config/       # Database connection
-├── handlers/     # HTTP request handlers
-├── middleware/   # JWT auth middleware
-├── models/       # Data structures
-├── repository/   # Database queries
-└── routes/       # Route definitions
+├── config/       # Database connection setup
+├── handlers/     # HTTP request handlers/controllers
+├── middleware/   # JWT auth and security middleware
+├── models/       # Database schemas and data structures
+├── repository/   # Database queries and interactions
+└── routes/       # API route definitions
+```
 
 ## Getting Started
 
@@ -32,6 +39,7 @@ notes-api/
 
 ### Setup
 1. Clone the repo
+   
 ```bash
    git clone https://github.com/yourusername/notes-api.git
    cd notes-api
