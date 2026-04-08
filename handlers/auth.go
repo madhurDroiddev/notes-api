@@ -14,6 +14,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
 func Register(c *gin.Context) {
 	var req models.RegisterRequest
 
@@ -47,7 +52,7 @@ func Register(c *gin.Context) {
 }
 
 func Login(c *gin.Context) {
-	var req models.RegisterRequest
+	var req LoginRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		errorResponse(c, http.StatusBadRequest, "Invalid request")
@@ -80,11 +85,11 @@ func Login(c *gin.Context) {
 func generateToken(userID int) (string, error) {
 	secret := os.Getenv("JWT_SECRET")
 
-	claims := jwt.MapClaims{
-		"user_id": userID,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
-	}
+	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id":  userID,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
+		"issuedAt": time.Now().Unix(),
+	})
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secret))
+	return claims.SignedString([]byte(secret))
 }

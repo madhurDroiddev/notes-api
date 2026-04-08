@@ -64,9 +64,23 @@ JWT_SECRET=your_secret_key
        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
        title VARCHAR(255) NOT NULL,
        content TEXT,
-       created_at TIMESTAMP DEFAULT NOW(),
-       updated_at TIMESTAMP DEFAULT NOW()
+       search_vector TSVECTOR,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_at TIMESTAMPTZ DEFAULT NOW()
    );
+
+   -- Create a trigger to automatically update the search_vector column
+   CREATE OR REPLACE FUNCTION update_search_vector()
+   RETURNS TRIGGER AS $$
+   BEGIN
+       NEW.search_vector := to_tsvector('english', NEW.title || ' ' || NEW.content);
+       RETURN NEW;
+   END;
+   $$ LANGUAGE plpgsql;
+
+   CREATE TRIGGER notes_search_vector_update
+   BEFORE INSERT OR UPDATE ON notes
+   FOR EACH ROW EXECUTE FUNCTION update_search_vector();
 ```
 
 4. Run the server
