@@ -5,7 +5,6 @@ import (
 	"os"
 	"time"
 
-	"notes-api/config"
 	"notes-api/models"
 	"notes-api/repository"
 
@@ -19,31 +18,35 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
-func Register(c *gin.Context) {
+type AuthHandler struct {
+	repo repository.UserRepository
+}
+
+func NewAuthHandler(repo repository.UserRepository) *AuthHandler {
+	return &AuthHandler{repo: repo}
+}
+
+func (h *AuthHandler) Register(c *gin.Context) {
 	var req models.RegisterRequest
 
-	// Bind JSON body to struct
 	if err := c.ShouldBindJSON(&req); err != nil {
 		errorResponse(c, http.StatusBadRequest, "Invalid request")
 		return
 	}
 
-	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		errorResponse(c, http.StatusBadRequest, "Could not hash password")
 		return
 	}
 
-	// Create user object
 	user := models.User{
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: string(hashedPassword),
 	}
 
-	// Save to DB
-	if err := repository.CreateUser(config.DB, user); err != nil {
+	if _, err := h.repo.Create(user); err != nil {
 		errorResponse(c, http.StatusConflict, "Email already exists")
 		return
 	}
@@ -51,7 +54,7 @@ func Register(c *gin.Context) {
 	successResponse(c, "User registered successfully")
 }
 
-func Login(c *gin.Context) {
+func (h *AuthHandler) Login(c *gin.Context) {
 	var req LoginRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -59,20 +62,17 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// Fetch user from DB by email
-	user, err := repository.GetUserByEmail(config.DB, req.Email)
+	user, err := h.repo.GetByEmail(req.Email)
 	if err != nil {
 		errorResponse(c, http.StatusUnauthorized, "Invalid email or password")
 		return
 	}
 
-	// Compare hashed password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		errorResponse(c, http.StatusUnauthorized, "Invalid email or password")
 		return
 	}
 
-	// Generate JWT token
 	token, err := generateToken(user.ID)
 	if err != nil {
 		errorResponse(c, http.StatusInternalServerError, "Could not generate token")
